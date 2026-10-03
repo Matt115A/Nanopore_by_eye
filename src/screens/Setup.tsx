@@ -18,6 +18,7 @@ interface Props {
 }
 
 const pct = (v: number | null) => (v == null ? '—' : `${Math.round(v * 100)}%`);
+const FEEDBACK_TEXT: Record<FeedbackMode, string> = { none: 'none', correctness: 'right / wrong', sequence: 'right / wrong + sequence', explain: 'right / wrong + expected traces' };
 
 function validate(c: Config): string | null {
   if (c.keys.length !== 4 || new Set(c.keys).size !== 4) return 'Enter four different keys (for A, C, G, T).';
@@ -29,7 +30,7 @@ async function readSession(f: File): Promise<Session | null> {
   try { const s = JSON.parse(await f.text()) as Session; return s.meta && Array.isArray(s.trials) ? s : null; } catch { return null; }
 }
 
-export function Setup({ data, initial, debug, setDebug, history, setHistory, onStart, onSimulate, onOpenSession }: Props) {
+export function Setup({ initial, debug, setDebug, history, setHistory, onStart, onSimulate, onOpenSession }: Props) {
   const [c, setC] = useState<Config>(initial);
   const [keysText, setKeysText] = useState(initial.keys.join(''));
   const openRef = useRef<HTMLInputElement>(null);
@@ -47,7 +48,7 @@ export function Setup({ data, initial, debug, setDebug, history, setHistory, onS
     <div className="screen">
       <div className="setup" style={{ width: 'min(900px, 100%)' }}>
         <h1 className="title">Reading DNA by eye</h1>
-        <p className="subtitle">Real nanopore current from E. coli (R10.4.1) · {data.windows.length.toLocaleString()} windows · press the base in the highlighted stretch.</p>
+        <p className="subtitle">Real nanopore current from E. coli (R10.4.1) · learn to press the base in the highlighted stretch.</p>
         {PUBLIC && <About />}
 
         <div className="card" style={{ marginBottom: 18 }}>
@@ -82,8 +83,9 @@ export function Setup({ data, initial, debug, setDebug, history, setHistory, onS
                 <td>{i + 1}. {p.label}{p.endOnCriterion && <span className="muted"> (ends early at {pct(p.endOnCriterion.threshold)})</span>}</td>
                 <td className="muted">{p.sample === 'DM' ? 'unmethylated' : 'CpG-methylated'}</td><td className="muted">{(p.choices ?? ['A', 'C', 'G', 'T']).join(' ')}{p.order === 'easyFirst' ? ' · easy first' : ''}</td>
                 <td className="num">{PUBLIC ? p.trials : <input type="number" style={{ width: 70 }} value={p.trials} onChange={(e) => setPhase(i, { trials: Number(e.target.value) })} />}</td>
-                <td><select disabled={PUBLIC} value={p.feedback} onChange={(e) => setPhase(i, { feedback: e.target.value as FeedbackMode })}>
-                  <option value="none">none</option><option value="correctness">right / wrong</option><option value="sequence">right / wrong + sequence</option><option value="explain">right / wrong + expected traces</option></select></td>
+                <td>{PUBLIC ? FEEDBACK_TEXT[p.feedback] : (
+                  <select value={p.feedback} onChange={(e) => setPhase(i, { feedback: e.target.value as FeedbackMode })}>
+                    {Object.entries(FEEDBACK_TEXT).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>)}</td>
                 <td className="num">{PUBLIC ? p.feedbackMs : <input type="number" style={{ width: 70 }} value={p.feedbackMs} onChange={(e) => setPhase(i, { feedbackMs: Number(e.target.value) })} />} ms</td>
               </tr>
             ))}</tbody>
@@ -136,16 +138,20 @@ function About() {
       <h3 className="card-title">What is this?</h3>
       <p className="card-sub" style={{ fontSize: 14.5, lineHeight: 1.6 }}>
         A nanopore sequencer reads DNA by pulling it through a tiny pore and measuring the electrical current, which changes with the bases inside.
-        Each trial shows a real stretch of that current. Press <kbd>A</kbd> <kbd>C</kbd> <kbd>G</kbd> <kbd>T</kbd> for the base in the highlighted stretch.
-        There are no instructions beyond that — you learn from the feedback, like a machine-learning model would. At the end you're compared,
+        Each trial shows a real stretch of that current. Press <kbd>A</kbd> <kbd>C</kbd> <kbd>G</kbd> <kbd>T</kbd> to guess the base in the highlighted stretch.
+        There are no instructions beyond that; you learn from the feedback on your guess, like a machine-learning model would. At the end you're compared,
         on exactly the same traces, with simple models, a neural network, and Oxford Nanopore's own basecaller.
       </p>
       <p className="card-sub" style={{ fontSize: 14.5, lineHeight: 1.6 }}>
-        <b>Session 1</b> (≈25–35 min) first; come back for <b>Session 2</b> (≈30 min) — the app remembers what you've seen and never shows you the same trace twice.
+        <b>Session 1</b> (≈25–35 min) first; come back for <b>Session 2</b> (≈30 min) (the app remembers what you've seen).
         Everything stays in this browser: nothing is uploaded. Download your results at the end if you want to keep them. Press <kbd>Esc</kbd> to pause.
       </p>
       {touchOnly && <p className="error" style={{ margin: '8px 0 0' }}>This needs a physical keyboard — please use a laptop or desktop.</p>}
-      <p className="note" style={{ marginTop: 8 }}>Data: ONT methylation benchmark (Kulkarni et al., 2024; MIT licence) — E. coli R10.4.1 reads. See the project page for details.</p>
+      <p className="note" style={{ marginTop: 8 }}>
+        Data: ONT methylation benchmark (Kulkarni et al., 2024; MIT licence) — E. coli R10.4.1 reads. See the{' '}
+        <a href="https://github.com/Matt115A/Nanopore_by_eye" target="_blank" rel="noopener noreferrer">project page</a> for more details, or read our walkthrough of an example session{' '}
+        <a href="https://substack.com/home/post/p-218656615" target="_blank" rel="noopener noreferrer">here</a>.
+      </p>
     </div>
   );
 }

@@ -210,3 +210,4 @@ table.data tr:last-child td { border-bottom: none; }
 .hud-part { font-size: 18px !important; padding-top: 6px; }
 .phase-table td.good { color: var(--good); }
 .keycap.kc-off { opacity: 0.18; }
+.card a, .note a { color: #f2c230; text-decoration: underline; text-underline-offset: 2px; }
