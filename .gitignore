@@ -1,0 +1,7 @@
+node_modules
+dist
+# personal session data and the private article-figures page — never publish
+public/figdata/
+figures.html
+src/figures.tsx
+.DS_Store
