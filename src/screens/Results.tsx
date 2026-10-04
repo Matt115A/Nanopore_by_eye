@@ -4,6 +4,8 @@ import { downloadCsv, downloadMetadata, downloadSessionJson } from '../lib/expor
 import { type HistoryEntry, priorTo } from '../lib/history';
 import type { Dataset, Session } from '../lib/types';
 import { Analysis } from './Analysis';
+import { ContributeCard } from '../components/ContributeCard';
+import { buildContribution } from '../lib/bioai';
 import { DataTab } from './DataTab';
 import { Replay } from './Replay';
 
@@ -38,6 +40,7 @@ export function Results({ session, data, history, onNew }: { session: Session; d
           <button className="btn btn-sm btn-primary" onClick={onNew}>New experiment</button>
         </div>
       </div>
+      <ContributeCard sessionId={m.session_id} simulated={!!m.simulated} contribution={buildContribution('nanopore', String(m.app_version ?? ''), String(m.dataset_version ?? ''), ['pretest', 'training', 'learning', 'cg', 'ag', 'mixed', 'posttest', 'methylated'], session.trials.map((t) => ({ item: t.window_id, response: t.pressed, phase: t.phase, rt: t.rt_ms })))} />
       {missing ? (
         <div className="card empty">This session was recorded with a different dataset version ({m.dataset_version}); its windows aren't in the loaded dataset ({data.version}).</div>
       ) : (

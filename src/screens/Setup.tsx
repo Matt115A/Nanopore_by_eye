@@ -47,6 +47,7 @@ export function Setup({ initial, debug, setDebug, history, setHistory, onStart, 
   return (
     <div className="screen">
       <div className="setup" style={{ width: 'min(900px, 100%)' }}>
+        <a className="bioai-link" href="https://matt115a.github.io/BioAI_by_eye/">PART OF BIOAI BY EYE →</a>
         <h1 className="title">Reading DNA by eye</h1>
         <p className="subtitle">Real nanopore current from E. coli (R10.4.1) · learn to press the base in the highlighted stretch.</p>
         {PUBLIC && <About />}
