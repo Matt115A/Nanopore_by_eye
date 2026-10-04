@@ -15,12 +15,12 @@ export function ContributeCard({ sessionId, simulated, contribution }: { session
           <div className="bioai-kicker">BioAI by eye</div>
           {simulated ? <b>Simulated sessions can't be contributed.</b>
             : !contribution ? <b>Answer at least 20 items to contribute.</b>
-            : done ? <><b>✓ Contributed anonymously.</b> Thank you — your answers now help map how people reason compared with AI.</>
+            : done ? <><b>✓ Contributed anonymously.</b> Thank you: your answers now help map how people reason compared with AI.</>
             : <><b>Help map how people reason vs AI.</b> Share this session as an anonymous datapoint: no name, account, IP or device details.{' '}
                 <button className="link-btn" onClick={() => setDetails((d) => !d)}>{details ? 'Hide' : 'What exactly is sent?'}</button></>}
           {details && contribution && !done && (
             <div className="bioai-details">
-              {contribution.n} answers: which items you saw (by id), what you answered, which part of the session each was in, and how long each took —
+              {contribution.n} answers: which items you saw (by id), what you answered, which part of the session each was in, and how long each took,
               plus the game ({contribution.game}), app and dataset versions. The date is stored to the month. Your browser keeps a private token so you can withdraw it later.
             </div>
           )}
