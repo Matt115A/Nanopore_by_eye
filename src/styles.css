@@ -225,3 +225,8 @@ table.data tr:last-child td { border-bottom: none; }
 .link-btn { background: none; border: none; padding: 0; color: #f2c230; text-decoration: underline; cursor: pointer; font: inherit; }
 .bioai-link { display: inline-block; font-size: 12.5px; letter-spacing: .08em; color: #f2c230; text-decoration: none; margin-bottom: 6px; }
 .bioai-link:hover { text-decoration: underline; }
+
+/* "you can stop and come back" callout: setup screen + pause overlay */
+p.save-note { max-width: 640px; margin: 14px 0 0; padding: 10px 14px; border: 1px solid var(--border); border-left: 3px solid var(--good); border-radius: 10px; background: var(--surface); color: var(--text-2); font-size: 14px; line-height: 1.55; text-align: left; }
+p.save-note b { color: var(--text); }
+.intro p.save-note { margin: 18px auto 22px; }

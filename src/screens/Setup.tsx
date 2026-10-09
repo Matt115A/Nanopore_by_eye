@@ -126,6 +126,11 @@ export function Setup({ initial, debug, setDebug, history, setHistory, onStart, 
             <input ref={openRef} type="file" accept=".json" hidden onChange={async (e) => { const s = e.target.files?.[0] && (await readSession(e.target.files[0])); if (s) onOpenSession(s); else alert('Not a session JSON.'); }} />
           </div>
         </div>
+        <p className="save-note">
+          <b>You don't have to finish in one sitting.</b> Press <kbd>Esc</kbd> at any point and choose <b>Stop &amp; save</b>, or just close the tab;
+          your answers are saved in this browser every few traces. When you come back they're listed under <b>Your experience</b>, and{' '}
+          {c.excludeSeen ? "your next session only shows traces you haven't seen." : 'you can start your next session from here.'}
+        </p>
       </div>
     </div>
   );
@@ -145,7 +150,7 @@ function About() {
       </p>
       <p className="card-sub" style={{ fontSize: 14.5, lineHeight: 1.6 }}>
         <b>Session 1</b> (≈25–35 min) first; come back for <b>Session 2</b> (≈30 min) (the app remembers what you've seen).
-        Everything stays in this browser: nothing is uploaded. Download your results at the end if you want to keep them. Press <kbd>Esc</kbd> to pause.
+        Everything stays in this browser: nothing is uploaded. Download your results at the end if you want to keep them.
       </p>
       {touchOnly && <p className="error" style={{ margin: '8px 0 0' }}>This needs a physical keyboard — please use a laptop or desktop.</p>}
       <p className="note" style={{ marginTop: 8 }}>

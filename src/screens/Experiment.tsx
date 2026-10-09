@@ -63,15 +63,17 @@ export function Experiment({ core, debug, kmer, onEnd }: { core: SessionCore; de
       </div>
 
       <div className="message" ref={message} />
-      <div className="esc-hint">Esc to pause</div>
+      <div className="esc-hint">Esc to pause or stop · progress is saved</div>
       {debug.enabled && <div className="debug-box" ref={dbg} />}
       {paused && (
         <div className="pause">
           <h2>Paused</h2>
           <p className="muted" style={{ margin: 0 }}>The timer is stopped. The interrupted trace will be shown again.</p>
+          <p className="save-note" style={{ margin: 0 }}><b>Need to go?</b> Stop &amp; save keeps your {core.trials.length} answer{core.trials.length === 1 ? '' : 's'} in this browser and shows your results so far. They stay under <b>Your experience</b>, and{' '}
+            {core.config.excludeSeen ? "next time you'll only see traces you haven't seen." : 'count towards your experience next time.'}</p>
           <div className="row">
             <button className="btn btn-primary" onClick={() => engine.current?.resume()}>Resume (Esc)</button>
-            <button className="btn" onClick={() => engine.current?.end('ended_by_user')}>End session &amp; analyse</button>
+            <button className="btn" onClick={() => engine.current?.end('ended_by_user')}>Stop &amp; save · see results</button>
           </div>
         </div>
       )}
