@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import type { DebugOpts } from '../App';
 import { PUBLIC, PUBLIC_PRESETS } from '../lib/env';
+import { type Level, LevelToggle, useLevel } from '../lib/level';
 import { loadLocal } from '../lib/export';
 import { addToHistory, type HistoryEntry, removeFromHistory } from '../lib/history';
 import { type Config, type Dataset, DEFAULT_CONFIG, type FeedbackMode, type PhaseSpec, PRESETS, type Session } from '../lib/types';
@@ -17,7 +18,7 @@ interface Props {
   onOpenSession: (s: Session) => void;
 }
 
-const pct = (v: number | null) => (v == null ? '—' : `${Math.round(v * 100)}%`);
+const pct = (v: number | null) => (v == null ? '–' : `${Math.round(v * 100)}%`);
 const FEEDBACK_TEXT: Record<FeedbackMode, string> = { none: 'none', correctness: 'right / wrong', sequence: 'right / wrong + sequence', explain: 'right / wrong + expected traces' };
 
 function validate(c: Config): string | null {
@@ -32,6 +33,7 @@ async function readSession(f: File): Promise<Session | null> {
 
 export function Setup({ initial, debug, setDebug, history, setHistory, onStart, onSimulate, onOpenSession }: Props) {
   const [c, setC] = useState<Config>(initial);
+  const [level, setLevel] = useLevel();
   const [keysText, setKeysText] = useState(initial.keys.join(''));
   const openRef = useRef<HTMLInputElement>(null);
   const histRef = useRef<HTMLInputElement>(null);
@@ -47,10 +49,11 @@ export function Setup({ initial, debug, setDebug, history, setHistory, onStart, 
   return (
     <div className="screen">
       <div className="setup" style={{ width: 'min(900px, 100%)' }}>
-        <a className="bioai-link" href="https://matt115a.github.io/BioAI_by_eye/">PART OF BIOAI BY EYE →</a>
+        <div className="setup-top"><a className="bioai-link" href="https://matt115a.github.io/BioAI_by_eye/">PART OF BIOAI BY EYE →</a><LevelToggle level={level} onChange={setLevel} /></div>
         <h1 className="title">Reading DNA by eye</h1>
-        <p className="subtitle">Real nanopore current from E. coli (R10.4.1) · learn to press the base in the highlighted stretch.</p>
-        {PUBLIC && <About />}
+        <p className="subtitle">{level === 'learner' ? 'Learn to read DNA from the electrical signal of a real sequencer, then see how you compare with the AI that does it for real.'
+          : 'Raw R10.4.1 current from E. coli reads · call the base in the highlighted stretch, scored against Dorado on identical windows.'}</p>
+        {PUBLIC && <About level={level} />}
 
         <div className="card" style={{ marginBottom: 18 }}>
           <div className="card-head"><div><h3 className="card-title">Your experience</h3>
@@ -138,23 +141,33 @@ export function Setup({ initial, debug, setDebug, history, setHistory, onStart, 
 
 const touchOnly = typeof window !== 'undefined' && window.matchMedia?.('(hover: none) and (pointer: coarse)').matches;
 
-function About() {
+function About({ level }: { level: Level }) {
   return (
     <div className="card" style={{ marginBottom: 18 }}>
       <h3 className="card-title">What is this?</h3>
-      <p className="card-sub" style={{ fontSize: 14.5, lineHeight: 1.6 }}>
-        A nanopore sequencer reads DNA by pulling it through a tiny pore and measuring the electrical current, which changes with the bases inside.
-        Each trial shows a real stretch of that current. Press <kbd>A</kbd> <kbd>C</kbd> <kbd>G</kbd> <kbd>T</kbd> to guess the base in the highlighted stretch.
-        There are no instructions beyond that; you learn from the feedback on your guess, like a machine-learning model would. At the end you're compared,
-        on exactly the same traces, with simple models, a neural network, and Oxford Nanopore's own basecaller.
-      </p>
+      {level === 'learner' ? (
+        <p className="card-sub" style={{ fontSize: 14.5, lineHeight: 1.6 }}>
+          A nanopore sequencer reads DNA by pulling it through a tiny pore and measuring the electrical current, which changes with the bases inside.
+          An AI called a basecaller turns that current into the letters A, C, G and T. Each trial shows a real stretch of current: press <kbd>A</kbd> <kbd>C</kbd> <kbd>G</kbd> <kbd>T</kbd> to
+          guess the base in the highlighted stretch. There are no instructions beyond that; you learn from the feedback on your guess, just as a machine-learning model would.
+          At the end you're compared, on exactly the same traces, with simple models, a small neural network and Oxford Nanopore's own basecaller.
+        </p>
+      ) : (
+        <p className="card-sub" style={{ fontSize: 14.5, lineHeight: 1.6 }}>
+          Each trial is a 161-sample window of normalised R10.4.1 current (5 kHz) from E. coli K-12 reads in ONT's methylation benchmark, centred on one base located
+          via Dorado sup move tables; the label is the aligned reference base. Highlight width is fixed, so no displayed duration leaks move-table length artefacts.
+          Learning is purely from trial feedback (no k-mer tables or rules), and some protocols add CpG-methylated (M.SssI) DNA. You're scored on identical windows against
+          Dorado fast, hac and sup v5.2.0 (which see the whole read), a 1D CNN that sees only the window, and level-only, k-NN and logistic regression baselines.
+          The CNN and baselines are trained on reads from the other half of the genome.
+        </p>
+      )}
       <p className="card-sub" style={{ fontSize: 14.5, lineHeight: 1.6 }}>
         <b>Session 1</b> (≈25–35 min) first; come back for <b>Session 2</b> (≈30 min) (the app remembers what you've seen).
         Everything stays in this browser: nothing is uploaded. Download your results at the end if you want to keep them.
       </p>
-      {touchOnly && <p className="error" style={{ margin: '8px 0 0' }}>This needs a physical keyboard — please use a laptop or desktop.</p>}
+      {touchOnly && <p className="error" style={{ margin: '8px 0 0' }}>This needs a physical keyboard. Please use a laptop or desktop.</p>}
       <p className="note" style={{ marginTop: 8 }}>
-        Data: ONT methylation benchmark (Kulkarni et al., 2024; MIT licence) — E. coli R10.4.1 reads. See the{' '}
+        Data: ONT methylation benchmark (Kulkarni et al., 2024; MIT licence): E. coli R10.4.1 reads. See the{' '}
         <a href="https://github.com/Matt115A/Nanopore_by_eye" target="_blank" rel="noopener noreferrer">project page</a> for more details, or read our walkthrough of an example session{' '}
         <a href="https://substack.com/home/post/p-218656615" target="_blank" rel="noopener noreferrer">here</a>.
       </p>

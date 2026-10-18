@@ -250,13 +250,13 @@ export class TrialEngine {
     const c = this.core;
     this.els.hudTrial.textContent = String(c.trials.length + 1);
     const acc = c.liveAccuracy(c.config.hudWindow);
-    this.els.hudAcc.textContent = acc === null ? '—' : `${Math.round(acc * 100)}%`;
+    this.els.hudAcc.textContent = acc === null ? '–' : `${Math.round(acc * 100)}%`;
     this.els.hudTime.textContent = fmtClock(this.activeMs());
     if (this.opts.debug && this.els.debug) {
       const last = c.trials[c.trials.length - 1];
       this.els.debug.innerHTML = `<div class="dbg-title">DEBUG</div>
         <div>part: <b>${c.phase?.name ?? 'done'}</b> (${c.phaseIdx + 1}/${c.config.phases.length})</div>
-        <div>last: ${last ? `${last.label} → ${last.pressed} · ${last.rt_ms.toFixed(0)} ms${last.centre_mC ? ' · <b>mC</b>' : ''}` : '—'}</div>
+        <div>last: ${last ? `${last.label} → ${last.pressed} · ${last.rt_ms.toFixed(0)} ms${last.centre_mC ? ' · <b>mC</b>' : ''}` : '–'}</div>
         <div>prior: ${c.meta.prior?.trials ?? 0} trials, ${c.meta.prior?.excluded_windows ?? 0} windows excluded</div>
         <div>frame ≈ ${c.meta.environment.estimated_frame_ms ?? '?'} ms</div>`;
     }

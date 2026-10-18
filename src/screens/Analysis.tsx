@@ -7,7 +7,7 @@ import {
 import type { HistoryEntry } from '../lib/history';
 import { BASES, type Dataset, type Session, type Win } from '../lib/types';
 
-const pct = (v: number | null | undefined) => (v == null ? '—' : `${Math.round(v * 100)}%`);
+const pct = (v: number | null | undefined) => (v == null ? '–' : `${Math.round(v * 100)}%`);
 const ms = (v: number) => `${Math.round(v)} ms`;
 const PCT_TICKS = [0, 0.25, 0.5, 0.75, 1];
 const MODEL_COLORS: Record<string, string> = { level: '#9cc3e6', knn: '#199e70', logreg: '#c98500', cnn: '#3987e5', fast: '#e87ba4', hac: '#d95926', sup: '#f4f4f0' };
@@ -76,7 +76,7 @@ export function Analysis({ session, data, byId, prior }: { session: Session; dat
                 <td><b>{p.label}</b></td><td className="muted">{FEEDBACK_LABEL[p.feedback]}</td><td className="num">{p.n}</td><td className="num muted">{pct(p.chance)}</td>
                 <td className="num"><b>{pct(p.acc)}</b></td><td className="num muted">{pct(p.ci[0])}–{pct(p.ci[1])}</td>
                 {BASES.map((b) => <td key={b} className="num">{pct(p.byBase[b])}</td>)}
-                <td className="num">{p.rt ? ms(p.rt) : '—'}</td>
+                <td className="num">{p.rt ? ms(p.rt) : '–'}</td>
               </tr>
             ))}
           </tbody>
@@ -97,7 +97,7 @@ export function Analysis({ session, data, byId, prior }: { session: Session; dat
       </div>
 
       <Card title="Same experience" svgRef={refs.stream} exportName="same_experience"
-        sub={`x = total trials of experience${priorN ? ` (including your ${priorN} earlier trials)` : ''}. The learners saw every trace you saw, in order, with the same right/wrong feedback, and nothing during no-feedback parts — but not the sequence reveal, which only you got. Dots: CNN trained on that many random examples.`}>
+        sub={`x = total trials of experience${priorN ? ` (including your ${priorN} earlier trials)` : ''}. The learners saw every trace you saw, in order, with the same right/wrong feedback, and nothing during no-feedback parts, but not the sequence reveal, which only you got. Dots: CNN trained on that many random examples.`}>
         <Legend items={[{ name: 'You', color: C.yellow }, ...r.stream.map((s, i) => ({ name: s.label, color: ['#9cc3e6', '#199e70', '#3987e5'][i] })), { name: 'CNN, n examples', color: '#e87ba4', square: true }]} />
         <LineChart svgRef={refs.stream} height={320}
           series={[{ name: 'You', color: C.yellow, points: shift(r.acc), width: 3 }, ...r.stream.map((s, i) => ({ name: s.label, color: ['#9cc3e6', '#199e70', '#3987e5'][i], points: shift(s.series), width: 1.8 })),
@@ -143,7 +143,7 @@ export function Analysis({ session, data, byId, prior }: { session: Session; dat
       {r.ms.length > 0 && (
         <Card title="Learning speed" sub={`First trial (in the first part with feedback) at which rolling accuracy over ${o.window} trials reaches each level.`}>
           <table className="data"><thead><tr><th>Level</th><th className="num">Trial</th><th className="num">Median RT there</th></tr></thead>
-            <tbody>{r.ms.map((m) => <tr key={m.level}><td>{pct(m.level)}</td><td className="num">{m.trial ?? '—'}</td><td className="num">{m.medianRt ? ms(m.medianRt) : '—'}</td></tr>)}</tbody></table>
+            <tbody>{r.ms.map((m) => <tr key={m.level}><td>{pct(m.level)}</td><td className="num">{m.trial ?? '–'}</td><td className="num">{m.medianRt ? ms(m.medianRt) : '–'}</td></tr>)}</tbody></table>
         </Card>
       )}
     </div>

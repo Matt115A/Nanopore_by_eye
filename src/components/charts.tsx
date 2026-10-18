@@ -284,7 +284,7 @@ export function Bars({
                 />
               )}
               <text x={x + bw / 2} y={y - 8} textAnchor="middle" fill={C.text} fontSize={15} fontWeight={600}>
-                {b.value === null ? '—' : format(b.value)}
+                {b.value === null ? '–' : format(b.value)}
               </text>
               <text x={x + bw / 2} y={m.t + ih + 18} textAnchor="middle" fill={C.text2} fontSize={12.5}>
                 {b.label}

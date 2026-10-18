@@ -66,7 +66,7 @@ export function Replay({ session, data, byId }: { session: Session; data: Datase
               <div className="kpi"><div className="kpi-label">Trial</div><div className="kpi-value">{t.trial}</div></div>
               <div className="kpi"><div className="kpi-label">You</div><div className="kpi-value" style={{ color: t.correct ? C.good : C.bad }}>{t.pressed}</div></div>
               <div className="kpi"><div className="kpi-label">RT</div><div className="kpi-value">{Math.round(t.rt_ms)} ms</div></div>
-              <div className="kpi"><div className="kpi-label">Accuracy (30)</div><div className="kpi-value">{accAt.has(t.trial) ? pct(accAt.get(t.trial)!) : '—'}</div></div>
+              <div className="kpi"><div className="kpi-label">Accuracy (30)</div><div className="kpi-value">{accAt.has(t.trial) ? pct(accAt.get(t.trial)!) : '–'}</div></div>
             </div>
           </div>
           <LineChart height={130} series={[{ name: 'Accuracy', color: C.yellow, points: accS }]} xDomain={[1, n]} yDomain={[0, 1]} yTicks={[0, 0.25, 0.5, 1]} yFormat={pct}

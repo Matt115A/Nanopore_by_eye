@@ -34,10 +34,10 @@ export function Experiment({ core, debug, kmer, onEnd }: { core: SessionCore; de
   return (
     <div className="exp">
       <div className="hud">
-        <div className="hud-item"><div className="hud-label">Part</div><div className="hud-value hud-part" ref={hudPart}>—</div></div>
+        <div className="hud-item"><div className="hud-label">Part</div><div className="hud-value hud-part" ref={hudPart}>–</div></div>
         <div className="hud-item"><div className="hud-label">Trial</div><div className="hud-value" ref={hudTrial}>1</div></div>
         <div className="hud-item"><div className="hud-label">Time</div><div className="hud-value" ref={hudTime}>0:00</div></div>
-        <div className="hud-item"><div className="hud-label">Accuracy · last {core.config.hudWindow}</div><div className="hud-value" ref={hudAcc}>—</div></div>
+        <div className="hud-item"><div className="hud-label">Accuracy · last {core.config.hudWindow}</div><div className="hud-value" ref={hudAcc}>–</div></div>
       </div>
 
       <div className="trace-stage">
