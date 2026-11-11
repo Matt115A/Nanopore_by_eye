@@ -3,7 +3,7 @@ import type { DebugOpts } from '../App';
 import { PUBLIC, PUBLIC_PRESETS } from '../lib/env';
 import { type Level, LevelToggle, useLevel } from '../lib/level';
 import { loadLocal } from '../lib/export';
-import { type HistoryEntry, loadArchived, removeFromHistory } from '../lib/history';
+import { type HistoryEntry, latestSession, loadArchived, removeFromHistory } from '../lib/history';
 import { type Config, type Dataset, DEFAULT_CONFIG, type FeedbackMode, type PhaseSpec, PRESETS, type Session } from '../lib/types';
 
 interface Props {
@@ -41,6 +41,7 @@ export function Setup({ initial, debug, setDebug, history, setHistory, onStart, 
   const [level, setLevel] = useLevel();
   const [keysText, setKeysText] = useState(initial.keys.join(''));
   const last = useMemo(() => loadLocal(), []);
+  const mine = useMemo(() => latestSession(history, last), [history, last]);
   const cfg: Config = { ...c, keys: keysText.toUpperCase().replace(/\s+/g, '').split('') };
   const err = validate(cfg);
   const priorTrials = history.reduce((a, e) => a + e.n_trials, 0);
@@ -134,6 +135,7 @@ export function Setup({ initial, debug, setDebug, history, setHistory, onStart, 
         <div className="row" style={{ justifyContent: 'space-between' }}>
           <div className="row">
             <button className="btn btn-primary" disabled={!!err} onClick={() => onStart(cfg)} style={{ padding: '12px 26px', fontSize: 16 }}>Start experiment</button>
+            <button className="btn" disabled={!mine} title={mine ? 'Your results so far, as at the end of a game' : 'Play a game first to see your stats'} onClick={() => mine && onOpenSession(mine)} style={{ padding: '12px 22px', fontSize: 16 }}>Your stats</button>
             <a className="btn" href="https://substack.com/@mattpenner/note/p-218656615?r=4nmn57&utm_source=notes-share-action&utm_medium=web" target="_blank" rel="noreferrer" style={{ padding: '12px 22px', fontSize: 16, color: 'var(--text)', textDecoration: 'none' }}>Read the blog</a>
             {!PUBLIC && <button className="btn btn-ghost" onClick={() => { setC(DEFAULT_CONFIG); setKeysText(DEFAULT_CONFIG.keys.join('')); }}>Reset defaults</button>}
           </div>
