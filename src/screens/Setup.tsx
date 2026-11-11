@@ -134,6 +134,7 @@ export function Setup({ initial, debug, setDebug, history, setHistory, onStart, 
         <div className="row" style={{ justifyContent: 'space-between' }}>
           <div className="row">
             <button className="btn btn-primary" disabled={!!err} onClick={() => onStart(cfg)} style={{ padding: '12px 26px', fontSize: 16 }}>Start experiment</button>
+            <a className="btn" href="https://substack.com/@mattpenner/note/p-218656615?r=4nmn57&utm_source=notes-share-action&utm_medium=web" target="_blank" rel="noreferrer" style={{ padding: '12px 22px', fontSize: 16, color: 'var(--text)', textDecoration: 'none' }}>Read the blog</a>
             {!PUBLIC && <button className="btn btn-ghost" onClick={() => { setC(DEFAULT_CONFIG); setKeysText(DEFAULT_CONFIG.keys.join('')); }}>Reset defaults</button>}
           </div>
           <div className="row">
