@@ -5,3 +5,4 @@ public/figdata/
 figures.html
 src/figures.tsx
 .DS_Store
+*.tsbuildinfo
