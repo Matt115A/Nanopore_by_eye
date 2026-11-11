@@ -1,11 +1,10 @@
 import { useMemo, useState } from 'react';
 import { fmtClock } from '../lib/engine';
 import { downloadCsv, downloadMetadata, downloadSessionJson } from '../lib/export';
-import { type HistoryEntry, priorTo } from '../lib/history';
+import { type HistoryEntry, priorTo, backfillPastSessions, sessionContribution, cumulativeSession } from '../lib/history';
 import type { Dataset, Session } from '../lib/types';
 import { Analysis } from './Analysis';
 import { ContributeCard } from '../components/ContributeCard';
-import { buildContribution } from '../lib/bioai';
 import { DataTab } from './DataTab';
 import { Replay } from './Replay';
 
@@ -16,6 +15,14 @@ export function Results({ session, data, history, onNew }: { session: Session; d
   const byId = useMemo(() => new Map(data.windows.map((w) => [w.id, w])), [data]);
   const prior = useMemo(() => priorTo(history, session), [history, session]);
   const m = session.meta;
+  // once per results page: older short sessions join the pool before the card asks for it
+  useState(backfillPastSessions);
+  // the analysis defaults to everything played on this device; Replay, Data and the exports stay with this one run
+  const [scope, setScope] = useState<'all' | 'one'>('all');
+  const cum = useMemo(() => cumulativeSession(session), [session]);
+  const all = scope === 'all' && cum.sessions > 1;
+  const shown = all ? cum.session : session;
+  const contribution = useMemo(() => sessionContribution(session), [session]);
   const missing = session.trials.some((t) => !byId.has(t.window_id));
   return (
     <div className="results">
@@ -40,12 +47,18 @@ export function Results({ session, data, history, onNew }: { session: Session; d
           <button className="btn btn-sm btn-primary" onClick={onNew}>New experiment</button>
         </div>
       </div>
-      <ContributeCard sessionId={m.session_id} simulated={!!m.simulated} contribution={buildContribution('nanopore', String(m.app_version ?? ''), String(m.dataset_version ?? ''), ['pretest', 'training', 'learning', 'cg', 'ag', 'mixed', 'posttest', 'methylated'], session.trials.map((t) => ({ item: t.window_id, response: t.pressed, phase: t.phase, rt: t.rt_ms })))} />
+      <ContributeCard sessionId={m.session_id} simulated={!!m.simulated} contribution={contribution} startedAt={Date.parse(m.start_time)} />
+      {cum.sessions > 1 && tab === 'analysis' && (
+        <div className="tabs scope-tabs">
+          <button className={`tab ${all ? 'active' : ''}`} onClick={() => setScope('all')}>All {cum.sessions} sessions · {cum.session.trials.length}</button>
+          <button className={`tab ${all ? '' : 'active'}`} onClick={() => setScope('one')}>This session · {session.trials.length}</button>
+        </div>
+      )}
       {missing ? (
         <div className="card empty">This session was recorded with a different dataset version ({m.dataset_version}); its windows aren't in the loaded dataset ({data.version}).</div>
       ) : (
         <>
-          {tab === 'analysis' && <Analysis session={session} data={data} byId={byId} prior={prior} />}
+          {tab === 'analysis' && <Analysis session={shown} data={data} byId={byId} prior={all ? [] : prior} />}
           {tab === 'replay' && <Replay session={session} data={data} byId={byId} />}
           {tab === 'data' && <DataTab session={session} />}
         </>

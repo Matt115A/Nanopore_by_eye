@@ -88,7 +88,7 @@ describe('session', () => {
   });
 
   it('session 3: five parts, two-choice parts only show/accept their bases, easy traces first', () => {
-    const core = new SessionCore(DEFAULT_CONFIG, data, { seed: 21 });
+    const core = new SessionCore({ ...DEFAULT_CONFIG, protocol: 'session3', phases: PRESETS.session3.phases }, data, { seed: 21 });
     answer(core, 64, () => true);
     expect(core.phase!.name).toBe('cg');
     expect(core.allowedBase('C')).toBe('C'); expect(core.allowedBase('A')).toBeNull(); expect(core.allowedBase('T')).toBeNull();

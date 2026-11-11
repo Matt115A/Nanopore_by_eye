@@ -1,9 +1,9 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { DebugOpts } from '../App';
 import { PUBLIC, PUBLIC_PRESETS } from '../lib/env';
 import { type Level, LevelToggle, useLevel } from '../lib/level';
 import { loadLocal } from '../lib/export';
-import { addToHistory, type HistoryEntry, removeFromHistory } from '../lib/history';
+import { type HistoryEntry, loadArchived, removeFromHistory } from '../lib/history';
 import { type Config, type Dataset, DEFAULT_CONFIG, type FeedbackMode, type PhaseSpec, PRESETS, type Session } from '../lib/types';
 
 interface Props {
@@ -27,16 +27,19 @@ function validate(c: Config): string | null {
   return null;
 }
 
-async function readSession(f: File): Promise<Session | null> {
-  try { const s = JSON.parse(await f.text()) as Session; return s.meta && Array.isArray(s.trials) ? s : null; } catch { return null; }
+/** Sessions are meant to be played in order. A past session counts towards the protocol it was run with (falling back to its position in the history). */
+function sessionSteps(history: HistoryEntry[]) {
+  const order = PUBLIC ? PUBLIC_PRESETS : Object.keys(PRESETS);
+  const done = new Set<string>();
+  history.forEach((h, i) => { const p = loadArchived(h.session_id)?.meta.config?.protocol ?? order[Math.min(i, order.length - 1)]; if (p) done.add(p); });
+  const next = order.find((k) => !done.has(k)) ?? null;
+  return { order, done, next };
 }
 
 export function Setup({ initial, debug, setDebug, history, setHistory, onStart, onSimulate, onOpenSession }: Props) {
   const [c, setC] = useState<Config>(initial);
   const [level, setLevel] = useLevel();
   const [keysText, setKeysText] = useState(initial.keys.join(''));
-  const openRef = useRef<HTMLInputElement>(null);
-  const histRef = useRef<HTMLInputElement>(null);
   const last = useMemo(() => loadLocal(), []);
   const cfg: Config = { ...c, keys: keysText.toUpperCase().replace(/\s+/g, '').split('') };
   const err = validate(cfg);
@@ -44,6 +47,7 @@ export function Setup({ initial, debug, setDebug, history, setHistory, onStart, 
   const seen = new Set(history.flatMap((e) => e.window_ids)).size;
   const setPhase = (i: number, patch: Partial<PhaseSpec>) => setC({ ...c, phases: c.phases.map((p, j) => (j === i ? { ...p, ...patch } : p)) });
   const total = c.phases.reduce((a, p) => a + p.trials, 0);
+  const steps = sessionSteps(history);
   const estMin = c.phases.reduce((a, p) => a + p.trials * (1400 + p.feedbackMs + c.itiMs), 0) / 60000;
 
   return (
@@ -58,29 +62,34 @@ export function Setup({ initial, debug, setDebug, history, setHistory, onStart, 
         <div className="card" style={{ marginBottom: 18 }}>
           <div className="card-head"><div><h3 className="card-title">Your experience</h3>
             <p className="card-sub">{history.length ? `${priorTrials} trials over ${history.length} session${history.length > 1 ? 's' : ''}. ${c.excludeSeen ? `Those ${seen} windows won't be shown again.` : 'Seen windows may repeat.'}` : 'No previous sessions recorded on this machine.'}</p></div>
-            <div className="card-actions">
-              <button className="btn btn-sm" onClick={() => histRef.current?.click()}>Add past session file…</button>
-              <input ref={histRef} type="file" accept=".json" hidden onChange={async (e) => { const s = e.target.files?.[0] && (await readSession(e.target.files[0])); if (s) setHistory(addToHistory(s)); else alert('Not a session JSON.'); }} />
-            </div>
           </div>
           {history.length > 0 && (
-            <table className="data"><thead><tr><th>Session</th><th className="num">Trials</th><th className="num">Final accuracy</th><th className="num">A · C · G · T</th><th /></tr></thead>
+            <div className="table-scroll"><table className="data"><thead><tr><th>Session</th><th className="num">Trials</th><th className="num">Final accuracy</th><th className="num">A · C · G · T</th><th /></tr></thead>
               <tbody>{history.map((h) => (
                 <tr key={h.session_id}><td>{new Date(h.start_time).toLocaleString()}</td><td className="num">{h.n_trials}</td><td className="num">{pct(h.final.acc)}</td>
                   <td className="num muted">{['A', 'C', 'G', 'T'].map((b) => pct(h.final.byBase[b])).join(' · ')}</td>
                   <td><button className="btn btn-sm btn-ghost" onClick={() => setHistory(removeFromHistory(h.session_id))}>remove</button></td></tr>
-              ))}</tbody></table>
+              ))}</tbody></table></div>
           )}
           <label className="row" style={{ gap: 8, marginTop: 10, fontSize: 14 }}><input type="checkbox" checked={c.excludeSeen} onChange={(e) => setC({ ...c, excludeSeen: e.target.checked })} /> Never show a window I've seen before</label>
         </div>
 
         <div className="card" style={{ marginBottom: 18 }}>
-          <div className="card-head"><div><h3 className="card-title">Protocol</h3><p className="card-sub">{PRESETS[c.protocol]?.description ?? 'Custom protocol.'}</p></div>
-            <select className="btn btn-sm" value={c.protocol} onChange={(e) => setC({ ...c, protocol: e.target.value, phases: structuredClone(PRESETS[e.target.value].phases) })}>
-              {(PUBLIC ? PUBLIC_PRESETS : Object.keys(PRESETS)).map((k) => <option key={k} value={k}>{PRESETS[k].title}</option>)}
-            </select>
-          </div>
-          <table className="data">
+          <h3 className="card-title">Your sessions</h3>
+          <p className="card-sub">Play them in order: each session builds on what you learned in the one before.</p>
+          <div className="steps">{steps.order.map((k, i) => {
+            const st = steps.done.has(k) ? 'done' : k === steps.next ? 'next' : 'later';
+            return (
+              <button key={k} type="button" className={`step step-${st} ${c.protocol === k ? 'active' : ''}`} aria-pressed={c.protocol === k}
+                onClick={() => setC({ ...c, protocol: k, phases: structuredClone(PRESETS[k].phases) })}>
+                <span className="step-num">{st === 'done' ? '✓' : i + 1}</span>
+                <span className="step-body"><span className="step-label">Session {i + 1}</span><span className="step-title">{PRESETS[k].title.replace(/^Session \d+:\s*/, '')}</span>
+                  <span className="step-status">{st === 'done' ? 'done' : st === 'next' ? 'up next' : `after session ${i}`}</span></span>
+              </button>
+            );
+          })}</div>
+          <p className="card-sub" style={{ margin: '4px 0 12px' }}><b>{PRESETS[c.protocol]?.title ?? 'Custom protocol'}.</b> {PRESETS[c.protocol]?.description}</p>
+          <div className="table-scroll"><table className="data">
             <thead><tr><th>Part</th><th>DNA</th><th>Bases</th><th className="num">Trials</th><th>Feedback</th><th className="num">Feedback shown for</th></tr></thead>
             <tbody>{c.phases.map((p, i) => (
               <tr key={p.name}>
@@ -93,18 +102,22 @@ export function Setup({ initial, debug, setDebug, history, setHistory, onStart, 
                 <td className="num">{PUBLIC ? p.feedbackMs : <input type="number" style={{ width: 70 }} value={p.feedbackMs} onChange={(e) => setPhase(i, { feedbackMs: Number(e.target.value) })} />} ms</td>
               </tr>
             ))}</tbody>
-          </table>
+          </table></div>
           <p className="note" style={{ marginTop: 8 }}>{total} trials · roughly {Math.round(estMin)} min. Session stops at {c.maxDurationMin} min regardless.</p>
+          {c.phases.some((p) => p.sample === 'MSssI') && <p className="note">Methylated parts use DNA treated with M.SssI, which methylates every C that is followed by a G (CpG); other Cs stay unmethylated. When the answer is C, {Math.round(c.mCFraction * 100)}% of traces show a methylated C and the rest any C from that DNA{PUBLIC ? '' : ' (adjustable under Advanced settings)'}.</p>}
         </div>
 
         <div className="setup-grid">
           <div className="field"><label>Keys for A · C · G · T {PUBLIC && <span className="muted">(e.g. FJKL if you prefer)</span>}</label><input type="text" value={keysText} maxLength={4} onChange={(e) => setKeysText(e.target.value.toUpperCase())} /></div>
-          {!PUBLIC && <>
+        </div>
+        {!PUBLIC && <details className="advanced" style={{ marginBottom: 18 }}>
+          <summary style={{ cursor: 'pointer', color: 'var(--muted)', marginBottom: 10 }}>Advanced settings</summary>
+          <div className="setup-grid">
           <div className="field"><label>Inter-trial interval</label><div className="field-inline"><input type="number" value={c.itiMs} onChange={(e) => setC({ ...c, itiMs: Number(e.target.value) })} /><span className="unit">ms</span></div></div>
           <div className="field"><label>Methylated share of C trials</label><div className="field-inline"><input type="number" value={Math.round(c.mCFraction * 100)} onChange={(e) => setC({ ...c, mCFraction: Number(e.target.value) / 100 })} /><span className="unit">%</span></div></div>
           <div className="field"><label>Max session duration</label><div className="field-inline"><input type="number" value={c.maxDurationMin} onChange={(e) => setC({ ...c, maxDurationMin: Number(e.target.value) })} /><span className="unit">min</span></div></div>
-          </>}
-        </div>
+          </div>
+        </details>}
 
         {debug.enabled && (
           <div className="debug-panel">
@@ -125,8 +138,6 @@ export function Setup({ initial, debug, setDebug, history, setHistory, onStart, 
           </div>
           <div className="row">
             {last && <button className="btn btn-sm" onClick={() => onOpenSession(last)}>Open last session ({last.trials.length} trials)</button>}
-            <button className="btn btn-sm" onClick={() => openRef.current?.click()}>Open session file…</button>
-            <input ref={openRef} type="file" accept=".json" hidden onChange={async (e) => { const s = e.target.files?.[0] && (await readSession(e.target.files[0])); if (s) onOpenSession(s); else alert('Not a session JSON.'); }} />
           </div>
         </div>
         <p className="save-note">

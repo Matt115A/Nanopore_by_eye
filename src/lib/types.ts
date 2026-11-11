@@ -43,6 +43,15 @@ export interface Config {
 }
 
 export const PRESETS: Record<string, { title: string; description: string; phases: PhaseSpec[] }> = {
+  first: {
+    title: 'Session 1: learn, then methylation',
+    description: 'Learn from right/wrong feedback alone. After you reach 50% (over 100 trials, after at least 300), or at trial 600, traces switch to methylated DNA for 200 trials.',
+    phases: [
+      { name: 'learning', label: 'Learning', trials: 600, sample: 'DM', feedback: 'correctness', feedbackMs: 600, intro: '',
+        endOnCriterion: { minTrials: 300, threshold: 0.5, window: 100 } },
+      { name: 'methylated', label: 'Methylated DNA', trials: 200, sample: 'MSssI', feedback: 'correctness', feedbackMs: 600, intro: '' },
+    ],
+  },
   pretrained: {
     title: 'Session 2: context training',
     description: 'For someone who has already done session 1: retention test, training with the sequence revealed, transfer test, then methylated DNA.',
@@ -58,7 +67,7 @@ export const PRESETS: Record<string, { title: string; description: string; phase
     ],
   },
   session3: {
-    title: 'Session 3: one cue at a time',
+    title: 'Session 3: fine-tuning',
     description: 'Pre-test, then C-vs-G and A-vs-G as two-choice tasks (easiest traces first), then all four mixed, with feedback showing the neighbouring bases and the expected trace for the right answer vs the alternative. Post-test at the end.',
     phases: [
       { name: 'pretest', label: 'Pre-test', trials: 64, sample: 'DM', feedback: 'none', feedbackMs: 250, band: 'extended',
@@ -73,24 +82,15 @@ export const PRESETS: Record<string, { title: string; description: string; phase
         intro: 'Part 5 of 5: final test.\nNo feedback: best answer each time.' },
     ],
   },
-  first: {
-    title: 'Session 1: learn, then methylation',
-    description: 'Learn from right/wrong feedback alone. After you reach 50% (over 100 trials, after at least 300), or at trial 600, traces switch to methylated DNA for 200 trials.',
-    phases: [
-      { name: 'learning', label: 'Learning', trials: 600, sample: 'DM', feedback: 'correctness', feedbackMs: 600, intro: '',
-        endOnCriterion: { minTrials: 300, threshold: 0.5, window: 100 } },
-      { name: 'methylated', label: 'Methylated DNA', trials: 200, sample: 'MSssI', feedback: 'correctness', feedbackMs: 600, intro: '' },
-    ],
-  },
 };
 
 export const DEFAULT_CONFIG: Config = {
-  protocol: 'session3',
+  protocol: 'first',
   keys: ['A', 'C', 'G', 'T'],
   itiMs: 400,
-  phases: PRESETS.session3.phases,
+  phases: PRESETS.first.phases,
   mCFraction: 0.75,
-  maxDurationMin: 45,
+  maxDurationMin: 120,
   hudWindow: 50,
   repsPerBlock: 8,
   excludeSeen: true,

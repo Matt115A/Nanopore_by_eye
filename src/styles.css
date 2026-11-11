@@ -237,3 +237,30 @@ p.save-note b { color: var(--text); }
 .level-toggle button { border: none; background: transparent; color: var(--muted); padding: 5px 14px; border-radius: 99px; cursor: pointer; font-size: 13.5px; font-weight: 600; transition: background .15s, color .15s; }
 .level-toggle button.on { background: #f2c230; color: #111; }
 .level-toggle button:not(.on):hover { color: var(--text); }
+
+/* results: whether the analysis covers this run or every session on the device */
+.scope-tabs { margin: 0 0 14px; }
+
+/* ── session steps (setup): play 1 → 2 → 3 in order ── */
+.steps { display: flex; gap: 22px; margin: 14px 0 6px; }
+.step { position: relative; flex: 1; display: flex; gap: 12px; align-items: flex-start; text-align: left; padding: 12px 14px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px; color: inherit; font: inherit; cursor: pointer; transition: border-color .15s, background .15s; }
+.step:hover { border-color: var(--muted); }
+.step + .step::before { content: '→'; position: absolute; left: -18px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 15px; pointer-events: none; }
+.step.active { border-color: var(--accent); background: rgba(244, 244, 240, 0.06); box-shadow: 0 0 0 1px var(--accent) inset; }
+.step-num { flex: none; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-weight: 650; font-size: 14px;
+  border: 1px solid var(--border); color: var(--muted); }
+.step-next .step-num { border-color: var(--accent); color: var(--accent); }
+.step-done .step-num { background: rgba(60, 207, 126, 0.16); border-color: var(--good); color: var(--good); }
+.step-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.step-label { font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.step-title { font-weight: 600; line-height: 1.3; }
+.step-status { font-size: 12.5px; color: var(--muted); }
+.step-next .step-status { color: var(--accent); }
+.step-done .step-status { color: var(--good); }
+@media (max-width: 640px) {
+  .steps { flex-direction: column; gap: 18px; }
+  .step + .step::before { content: '↓'; left: 22px; top: -16px; transform: none; }
+}
+
+.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { loadDataset } from './lib/dataset';
-import { PUBLIC } from './lib/env';
+import { PUBLIC, PUBLIC_PRESETS } from './lib/env';
 import { loadLocal, saveLocal } from './lib/export';
 import { addToHistory, type HistoryEntry, loadHistory } from './lib/history';
 import { SessionCore } from './lib/session';
@@ -27,10 +27,10 @@ export function priorFrom(h: HistoryEntry[]): { exclude: Set<number>; prior: Pri
   return { exclude, prior: { sessions: h.length, trials: h.reduce((a, e) => a + e.n_trials, 0), session_ids: h.map((e) => e.session_id), excluded_windows: exclude.size } };
 }
 
-/** Public build: session 1 for newcomers, session 2 once session 1 is in the history. */
+/** The next session in order: session 1 for newcomers, then 2, then 3 (public build: sessions 1 and 2 only). */
 function recommended(h: HistoryEntry[]): Config {
-  if (!PUBLIC) return DEFAULT_CONFIG;
-  const protocol = h.length ? 'pretrained' : 'first';
+  const order = PUBLIC ? PUBLIC_PRESETS : Object.keys(PRESETS);
+  const protocol = order[Math.min(h.length, order.length - 1)];
   return { ...DEFAULT_CONFIG, protocol, phases: structuredClone(PRESETS[protocol].phases) };
 }
 
