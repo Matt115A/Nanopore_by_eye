@@ -1,5 +1,5 @@
 import { loadLocal } from './export';
-import type { Session } from './types';
+import type { Dataset, Session } from './types';
 import { backfillSessions, buildContribution, forgetSessions } from './bioai';
 
 /** Past sessions on this machine: which windows were seen, so they're never reused, and how much experience the participant has. */
@@ -122,4 +122,11 @@ export function cumulativeSession(s: Session): { session: Session; sessions: num
     session: { ...s, meta: { ...s.meta, start_time: all[0].meta.start_time, active_duration_ms: active, phase_starts }, trials },
     sessions: all.length,
   };
+}
+
+/** The game's own marking for one contributed answer (1 = right; the structure game gives partial credit), or null
+ *  for an item this dataset does not know. Used to place other players' contributions alongside yours. */
+export function answerScorer(data: Dataset): (item: number, response: string) => number | null {
+  const truth = new Map<number, string>(data.windows.map((x) => [x.id, String(x.label)]));
+  return (item, r) => { const t = truth.get(item); return t == null ? null : r === t ? 1 : 0; };
 }
