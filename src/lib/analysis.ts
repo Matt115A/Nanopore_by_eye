@@ -12,6 +12,14 @@ export function median(xs: number[]): number | null {
 }
 export const inBounds = (t: TrialRecord, o: AnalysisOpts) => !(o.useMinRt && t.rt_ms < o.minRt) && !(o.useMaxRt && t.rt_ms > o.maxRt);
 export const rtOk = (t: TrialRecord, o: AnalysisOpts) => inBounds(t, o) && (!o.excludeIncorrectRt || t.correct);
+/** Phred-style quality: Q = -10·log10(error rate), as sequencers report (Q10 = 90%, Q20 = 99%, Q30 = 99.9%).
+ *  With no errors in n answers the error rate is only known to be below about 1/n, so it shows as "Q≥". */
+export function fmtQ(accuracy: number | null | undefined, n?: number): string {
+  if (accuracy == null || !Number.isFinite(accuracy)) return '–';
+  const err = 1 - accuracy;
+  if (err <= 1e-9) return n ? `Q≥${Math.round(10 * Math.log10(n))}` : 'Q>40';
+  return `Q${(-10 * Math.log10(err)).toFixed(1)}`;
+}
 export const acc = (ts: { correct: boolean }[]) => (ts.length ? ts.filter((t) => t.correct).length / ts.length : null);
 
 /** Trailing-window mean of a boolean series over trial number; restarts at the twist. */

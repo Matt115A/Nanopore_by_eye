@@ -1,3 +1,4 @@
+import { fmtQ } from '../lib/analysis';
 import { useMemo, useState } from 'react';
 import type { DebugOpts } from '../App';
 import { PUBLIC, PUBLIC_PRESETS } from '../lib/env';
@@ -67,7 +68,7 @@ export function Setup({ initial, debug, setDebug, history, setHistory, onStart, 
           {history.length > 0 && (
             <div className="table-scroll"><table className="data"><thead><tr><th>Session</th><th className="num">Trials</th><th className="num">Final accuracy</th><th className="num">A · C · G · T</th><th /></tr></thead>
               <tbody>{history.map((h) => (
-                <tr key={h.session_id}><td>{new Date(h.start_time).toLocaleString()}</td><td className="num">{h.n_trials}</td><td className="num">{pct(h.final.acc)}</td>
+                <tr key={h.session_id}><td>{new Date(h.start_time).toLocaleString()}</td><td className="num">{h.n_trials}</td><td className="num">{pct(h.final.acc)} <span className="muted">{fmtQ(h.final.acc, 100)}</span></td>
                   <td className="num muted">{['A', 'C', 'G', 'T'].map((b) => pct(h.final.byBase[b])).join(' · ')}</td>
                   <td><button className="btn btn-sm btn-ghost" onClick={() => setHistory(removeFromHistory(h.session_id))}>remove</button></td></tr>
               ))}</tbody></table></div>

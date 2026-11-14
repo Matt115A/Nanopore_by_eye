@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { Bars, C, Card, Heatmap, type HeatRow, Legend, LineChart } from '../components/charts';
 import {
-  type AnalysisOpts, DEFAULT_ANALYSIS, acc, benchmarkSubsets, confusion, methylationEffect, milestones, modelAccuracy,
+  type AnalysisOpts, DEFAULT_ANALYSIS, acc, fmtQ, benchmarkSubsets, confusion, methylationEffect, milestones, modelAccuracy,
   phaseStats, rollingAccuracy, rollingRt, rollingSeries, streamLearners,
 } from '../lib/analysis';
 import type { HistoryEntry } from '../lib/history';
@@ -60,28 +60,28 @@ export function Analysis({ session, data, byId, prior }: { session: Session; dat
 
       <div className="kpis">
         <Kpi label="Experience" value={`${priorN + n}`} sub={priorN ? `${priorN} before this session + ${n} now` : `${n} trials`} />
-        {r.phases.slice(0, 4).map((p) => <Kpi key={p.name} label={p.label} value={pct(p.acc)} sub={`n=${p.n} · ${FEEDBACK_LABEL[p.feedback]}`} />)}
-        <Kpi label="1D CNN on your unmethylated windows" value={pct(modelAccuracy(dmTrials, byId, 'cnn'))} sub={`Dorado sup ${pct(modelAccuracy(dmTrials, byId, 'sup'))}`} />
+        {r.phases.slice(0, 4).map((p) => <Kpi key={p.name} label={p.label} value={pct(p.acc)} sub={`${fmtQ(p.acc, p.n)} · n=${p.n} · ${FEEDBACK_LABEL[p.feedback]}`} />)}
+        <Kpi label="1D CNN on your unmethylated windows" value={pct(modelAccuracy(dmTrials, byId, 'cnn'))} sub={`${fmtQ(modelAccuracy(dmTrials, byId, 'cnn'), dmTrials.length)} · Dorado sup ${pct(modelAccuracy(dmTrials, byId, 'sup'))} (${fmtQ(modelAccuracy(dmTrials, byId, 'sup'), dmTrials.length)})`} />
       </div>
 
-      <Card title="By part" sub="Accuracy with 95% interval, by base. Two-choice parts have 50% chance; models there pick the better-ranked of the two offered bases. The top row is how the previous session ended (last 100 trials with feedback).">
+      <Card title="By part" sub="Accuracy with 95% interval, by base. Q score is how sequencers report accuracy: Q = −10·log10(error rate), so Q10 = 90% and Q20 = 99%. Two-choice parts have 50% chance; models there pick the better-ranked of the two offered bases. The top row is how the previous session ended (last 100 trials with feedback).">
         <table className="data phase-table">
-          <thead><tr><th>Part</th><th>Feedback</th><th className="num">n</th><th className="num">Chance</th><th className="num">Accuracy</th><th className="num">95% CI</th>{BASES.map((b) => <th key={b} className="num">{b}</th>)}<th className="num">Median RT</th></tr></thead>
+          <thead><tr><th>Part</th><th>Feedback</th><th className="num">n</th><th className="num">Chance</th><th className="num">Accuracy</th><th className="num">Q score</th><th className="num">95% CI</th>{BASES.map((b) => <th key={b} className="num">{b}</th>)}<th className="num">Median RT</th></tr></thead>
           <tbody>
             {lastPrior && (
-              <tr className="muted"><td>Previous session (end)</td><td>right / wrong</td><td className="num">100</td><td className="num">25%</td><td className="num">{pct(lastPrior.final.acc)}</td><td />{BASES.map((b) => <td key={b} className="num">{pct(lastPrior.final.byBase[b])}</td>)}<td /></tr>
+              <tr className="muted"><td>Previous session (end)</td><td>right / wrong</td><td className="num">100</td><td className="num">25%</td><td className="num">{pct(lastPrior.final.acc)}</td><td className="num">{fmtQ(lastPrior.final.acc, 100)}</td><td />{BASES.map((b) => <td key={b} className="num">{pct(lastPrior.final.byBase[b])}</td>)}<td /></tr>
             )}
             {r.phases.map((p) => (
               <tr key={p.name}>
                 <td><b>{p.label}</b></td><td className="muted">{FEEDBACK_LABEL[p.feedback]}</td><td className="num">{p.n}</td><td className="num muted">{pct(p.chance)}</td>
-                <td className="num"><b>{pct(p.acc)}</b></td><td className="num muted">{pct(p.ci[0])}–{pct(p.ci[1])}</td>
+                <td className="num"><b>{pct(p.acc)}</b></td><td className="num">{fmtQ(p.acc, p.n)}</td><td className="num muted">{pct(p.ci[0])}–{pct(p.ci[1])}</td>
                 {BASES.map((b) => <td key={b} className="num">{pct(p.byBase[b])}</td>)}
                 <td className="num">{p.rt ? ms(p.rt) : '–'}</td>
               </tr>
             ))}
           </tbody>
         </table>
-        {pre && post && <p className="note" style={{ marginTop: 10 }}>Pre-test → post-test: {pct(pre.acc)} → {pct(post.acc)} overall; C {pct(pre.byBase.C)} → {pct(post.byBase.C)}, G {pct(pre.byBase.G)} → {pct(post.byBase.G)}.</p>}
+        {pre && post && <p className="note" style={{ marginTop: 10 }}>Pre-test → post-test: {pct(pre.acc)} ({fmtQ(pre.acc, pre.n)}) → {pct(post.acc)} ({fmtQ(post.acc, post.n)}) overall; C {pct(pre.byBase.C)} → {pct(post.byBase.C)}, G {pct(pre.byBase.G)} → {pct(post.byBase.G)}.</p>}
         <Bars svgRef={refs.bases} label="Accuracy by base, per part" domain={[0, 1]} format={pct} height={240}
           bars={r.phases.flatMap((p) => BASES.map((b) => ({ label: `${p.label.split(' ')[0]} ${b}`, value: p.byBase[b], color: BASE_COLORS[b] })))} />
       </Card>
@@ -106,20 +106,20 @@ export function Analysis({ session, data, byId, prior }: { session: Session; dat
           markers={markers.map((m) => ({ ...m, x: m.x + priorN }))} refLines={[{ y: 0.25, label: 'chance' }]} />
       </Card>
 
-      <Card title="Benchmark on identical windows" sub="Every model answered exactly the traces you answered. Simple models and the CNN see only the window; Dorado sees the whole read." svgRef={refs.bench} exportName="benchmark">
+      <Card title="Benchmark on identical windows" sub="Every model answered exactly the traces you answered, shown as accuracy and Q score. Simple models and the CNN see only the window; Dorado sees the whole read." svgRef={refs.bench} exportName="benchmark">
         <div style={{ overflowX: 'auto' }}>
           <table className="data">
             <thead><tr><th>Who</th>{r.subsets.map((s) => <th key={s.key} className="num">{s.label} <span className="muted">({s.trials.length})</span></th>)}</tr></thead>
             <tbody>
-              <tr><td><b style={{ color: C.yellow }}>You</b></td>{r.subsets.map((s) => <td key={s.key} className="num"><b>{pct(acc(s.trials))}</b></td>)}</tr>
+              <tr><td><b style={{ color: C.yellow }}>You</b></td>{r.subsets.map((s) => <td key={s.key} className="num"><b>{pct(acc(s.trials))}</b> <span className="muted">{fmtQ(acc(s.trials), s.trials.length)}</span></td>)}</tr>
               {data.models.map((m) => (
                 <tr key={m.name}><td><span style={{ color: MODEL_COLORS[m.name] }}>●</span> {m.label} <span className="tag">{m.kind}</span></td>
-                  {r.subsets.map((s) => <td key={s.key} className="num">{pct(modelAccuracy(s.trials, byId, m.name))}</td>)}</tr>
+                  {r.subsets.map((s) => <td key={s.key} className="num">{pct(modelAccuracy(s.trials, byId, m.name))} <span className="muted">{fmtQ(modelAccuracy(s.trials, byId, m.name), s.trials.length)}</span></td>)}</tr>
               ))}
             </tbody>
           </table>
         </div>
-        <Bars svgRef={refs.bench} label={`All ${n} traces from this session`} domain={[0, 1]} format={pct} height={240}
+        <Bars svgRef={refs.bench} label={`All ${n} traces from this session`} domain={[0, 1]} format={(v) => `${pct(v)} · ${fmtQ(v, n)}`} height={240}
           bars={[{ label: 'You', value: acc(session.trials), color: C.yellow }, ...data.models.map((m) => ({ label: m.label.replace(/^Dorado /, ''), value: modelAccuracy(session.trials, byId, m.name), color: MODEL_COLORS[m.name] }))]} />
       </Card>
 

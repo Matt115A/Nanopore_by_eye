@@ -1,3 +1,4 @@
+import { fmtQ } from './analysis';
 import { saveLocal } from './export';
 import type { SessionCore } from './session';
 import { SimLearner } from './simulate';
@@ -81,6 +82,7 @@ export interface EngineEls {
   hudTrial: HTMLElement;
   hudTime: HTMLElement;
   hudAcc: HTMLElement;
+  hudQ: HTMLElement;
   hudPart: HTMLElement;
   debug: HTMLElement | null;
 }
@@ -251,6 +253,7 @@ export class TrialEngine {
     this.els.hudTrial.textContent = String(c.trials.length + 1);
     const acc = c.liveAccuracy(c.config.hudWindow);
     this.els.hudAcc.textContent = acc === null ? '–' : `${Math.round(acc * 100)}%`;
+    this.els.hudQ.textContent = acc === null ? '–' : fmtQ(acc, c.config.hudWindow);
     this.els.hudTime.textContent = fmtClock(this.activeMs());
     if (this.opts.debug && this.els.debug) {
       const last = c.trials[c.trials.length - 1];

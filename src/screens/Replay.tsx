@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { C, LineChart } from '../components/charts';
 import { Trace } from '../components/Trace';
-import { DEFAULT_ANALYSIS, modelAnswer, phaseList, rollingAccuracy } from '../lib/analysis';
+import { DEFAULT_ANALYSIS, fmtQ, modelAnswer, phaseList, rollingAccuracy } from '../lib/analysis';
 import { BASES, type Base, type Dataset, type Session, type Win } from '../lib/types';
 
 const pct = (v: number) => `${Math.round(v * 100)}%`;
@@ -67,6 +67,7 @@ export function Replay({ session, data, byId }: { session: Session; data: Datase
               <div className="kpi"><div className="kpi-label">You</div><div className="kpi-value" style={{ color: t.correct ? C.good : C.bad }}>{t.pressed}</div></div>
               <div className="kpi"><div className="kpi-label">RT</div><div className="kpi-value">{Math.round(t.rt_ms)} ms</div></div>
               <div className="kpi"><div className="kpi-label">Accuracy (30)</div><div className="kpi-value">{accAt.has(t.trial) ? pct(accAt.get(t.trial)!) : '–'}</div></div>
+              <div className="kpi"><div className="kpi-label">Q score (30)</div><div className="kpi-value">{accAt.has(t.trial) ? fmtQ(accAt.get(t.trial)!, 30) : '–'}</div></div>
             </div>
           </div>
           <LineChart height={130} series={[{ name: 'Accuracy', color: C.yellow, points: accS }]} xDomain={[1, n]} yDomain={[0, 1]} yTicks={[0, 0.25, 0.5, 1]} yFormat={pct}
